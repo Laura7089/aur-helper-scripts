@@ -95,6 +95,7 @@ cleanall:
 
 [private]
 makenvcconfig:
+    [ -f .nvchecker_keys.toml ] || echo '[keys]' > .nvchecker_keys.toml
     cp nvchecker_config.toml "{{ NVCHECKER_CONFIG }}"
     find -name nvchecker.toml -exec cat {} + >> "{{ NVCHECKER_CONFIG }}"
 
