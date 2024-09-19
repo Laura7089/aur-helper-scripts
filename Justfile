@@ -2,6 +2,7 @@
 
 PKG_GLOB := "*.pkg.*"
 BROWSER := env_var_or_default("BROWSER", "xdg-open")
+NVCHECKER_CONFIG := `mktemp -u -p. .nvcheckerXXXXXXX.temp.toml`
 
 # build the package (need to be next to PKGBUILD)
 [no-cd]
@@ -84,13 +85,21 @@ cleanall:
     find -maxdepth 1 -mindepth 1 -type d -not -name legacy \
         -ok sh -c '(cd {} && just clean)' \;
 
+[private]
+makenvcconfig:
+    cp nvchecker_config.toml "{{ NVCHECKER_CONFIG }}"
+    find -name nvchecker.toml -exec cat {} + >> "{{ NVCHECKER_CONFIG }}"
+
+removenvcconfig:
+    rm "{{ NVCHECKER_CONFIG }}"
+
 # check for new versions of configured packages
-updates:
-    nvchecker -c nvchecker_config.toml
+updates: makenvcconfig && removenvcconfig
+    -nvchecker -c "{{ NVCHECKER_CONFIG }}"
 
 # mark packages as having been updated
-markupdated *names="":
-    nvtake -c nvchecker_config.toml {{ \
+markupdated *names="": makenvcconfig && removenvcconfig
+    nvtake -c "{{ NVCHECKER_CONFIG }}" {{ \
         if names == "" { \
             replace_regex(file_stem(invocation_directory()), "-bin$", "") \
         } else { \
