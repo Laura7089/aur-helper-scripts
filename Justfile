@@ -4,36 +4,42 @@ PKG_GLOB := "*.pkg.*"
 BROWSER := env_var_or_default("BROWSER", "xdg-open")
 NVCHECKER_CONFIG := `mktemp -u -p. .nvcheckerXXXXXXX.temp.toml`
 
-# build the package (need to be next to PKGBUILD)
+# build the package
 [no-cd]
 [no-exit-message]
+[group('build & test (invoke next to PKGBUILD)')]
 build *args="--force --syncdeps": && check
     makepkg {{args}}
 
 [no-cd]
+[private]
 latest:
     ls -1 {{PKG_GLOB}} | grep -v '\.sig$' | tail -1
 
-# build and install the package (need to be next to PKGBUILD)
+# build and install the package
 [no-cd]
 [no-exit-message]
+[group('build & test (invoke next to PKGBUILD)')]
 install *args="--force":
     makepkg -si {{args}}
 
-# check the package with namcap (need to be next to PKGBUILD)
+# check the package with namcap
 [no-cd]
+[group('build & test (invoke next to PKGBUILD)')]
 check *args="":
     namcap {{args}} PKGBUILD
     namcap {{args}} "$(just latest)"
 
-# generate the .SRCINFO file (need to be next to PKGBUILD)
+# generate the .SRCINFO file
 [no-cd]
 [no-exit-message]
+[group('utilities (invoke next to PKGBUILD)')]
 srcinfo:
     makepkg --printsrcinfo > .SRCINFO
 
-# initialise the AUR git repo for a package (need to be next to PKGBUILD)
+# initialise the AUR git repo for a package
 [no-cd]
+[group('utilities (invoke next to PKGBUILD)')]
 gitinit:
     #!/bin/bash
     set -euxo pipefail
@@ -60,8 +66,9 @@ new name type="normal":
     cd "{{name}}" && just gitinit
     @echo "Don't forget to add nvchecker configuration for {{name}}!"
 
-# clean a package directory (need to be next to PKGBUILD)
+# clean a package directory
 [no-cd]
+[group('utilities (invoke next to PKGBUILD)')]
 clean: && cleangitignore
     @[ -f PKGBUILD ] || (echo "no PKGBUILD found, exiting for safety" && exit 1)
     rm -rfv pkg src
@@ -80,7 +87,8 @@ cleangitignore:
         done
     fi
 
-# clean up all the package in the entire directory
+# clean all packages in the entire root repo
+[no-exit-message]
 cleanall:
     find -maxdepth 1 -mindepth 1 -type d -not -name legacy \
         -ok sh -c '(cd {} && just clean)' \;
@@ -90,14 +98,20 @@ makenvcconfig:
     cp nvchecker_config.toml "{{ NVCHECKER_CONFIG }}"
     find -name nvchecker.toml -exec cat {} + >> "{{ NVCHECKER_CONFIG }}"
 
+[no-exit-message]
+[private]
 removenvcconfig:
     rm "{{ NVCHECKER_CONFIG }}"
 
 # check for new versions of configured packages
+[no-exit-message]
+[group('version management')]
 updates: makenvcconfig && removenvcconfig
     -nvchecker -c "{{ NVCHECKER_CONFIG }}"
 
 # mark packages as having been updated
+[no-exit-message]
+[group('version management')]
 markupdated *names="": makenvcconfig && removenvcconfig
     nvtake -c "{{ NVCHECKER_CONFIG }}" {{ \
         if names == "" { \
@@ -107,21 +121,27 @@ markupdated *names="": makenvcconfig && removenvcconfig
         } \
     }}
 
-# open the upstream in a browser (need to be next to PKGBUILD)
+# open the upstream in a browser
 [no-cd]
+[group('utilities (invoke next to PKGBUILD)')]
 openurl:
     {{BROWSER}} "$(just get_var url)"
 
 # run repro on a package
 [no-cd]
+[no-exit-message]
+[group('build & test (invoke next to PKGBUILD)')]
 repro *args="": (build)
     repro -f {{ args }} "$(just latest)"
 
 # print the pkgver of a package
 [no-cd]
+[group('utilities (invoke next to PKGBUILD)')]
 version: (get_var "pkgver")
 
 # print the value of a variable from PKGBUILD
 [no-cd]
+[no-exit-message]
+[group('utilities (invoke next to PKGBUILD)')]
 get_var var:
     bash -c 'source PKGBUILD && echo "${{var}}"'
