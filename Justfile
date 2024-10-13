@@ -4,17 +4,20 @@ PKG_GLOB := "*.pkg.*"
 BROWSER := env_var_or_default("BROWSER", "xdg-open")
 NVCHECKER_CONFIG := `mktemp -u -p. .nvcheckerXXXXXXX.temp.toml`
 
+REPRO_CACHE := justfile_directory() / ".repro-cache"
+REPRO_BUILD := invocation_directory() / "repro-build"
+
 # build the package
 [no-cd]
 [no-exit-message]
 [group('build & test (invoke next to PKGBUILD)')]
-build *args="--force --syncdeps": && check
+build *args="--syncdeps":
     makepkg {{args}}
 
 [no-cd]
 [private]
 latest:
-    ls -1 {{PKG_GLOB}} | grep -v '\.sig$' | tail -1
+    find . -maxdepth 1 -type f -name "{{PKG_GLOB}}" | tail -1
 
 # build and install the package
 [no-cd]
@@ -26,7 +29,7 @@ install *args="--force":
 # check the package with namcap
 [no-cd]
 [group('build & test (invoke next to PKGBUILD)')]
-check *args="":
+check *args="": (build "--force")
     namcap {{args}} PKGBUILD
     namcap {{args}} "$(just latest)"
 
@@ -132,8 +135,12 @@ openurl:
 [no-cd]
 [no-exit-message]
 [group('build & test (invoke next to PKGBUILD)')]
-repro *args="": (build)
-    repro -f {{ args }} "$(just latest)"
+repro dir="./repro-build" *args="-d": (build "--force")
+    CACHEDIR="{{ REPRO_CACHE }}" \
+        repro \
+        -o "{{ REPRO_BUILD }}" \
+        {{ args }} \
+         "$(just latest)"
 
 # print the pkgver of a package
 [no-cd]
