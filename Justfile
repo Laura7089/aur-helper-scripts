@@ -23,8 +23,7 @@ latest:
 [no-cd]
 [no-exit-message]
 [group('build & test (invoke next to PKGBUILD)')]
-install *args="":
-    makepkg -si {{args}}
+install *args="": (build "-si" args)
 
 # check the package with namcap
 [no-cd]
