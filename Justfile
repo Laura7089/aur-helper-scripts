@@ -1,7 +1,5 @@
 #!/bin/env -S just --justfile
 
-PKG_GLOB := "*.pkg.*"
-BROWSER := env_var_or_default("BROWSER", "xdg-open")
 NVCHECKER_CONFIG := `mktemp -u -p. .nvcheckerXXXXXXX.temp.toml`
 
 REPRO_CACHE := justfile_directory() / ".repro-cache"
@@ -17,7 +15,7 @@ build *args="--syncdeps":
 [no-cd]
 [private]
 latest:
-    find . -maxdepth 1 -type f -name "{{PKG_GLOB}}" | tail -1
+    find . -maxdepth 1 -type f -name "*.pkg.*" | tail -1
 
 # build and install the package
 [no-cd]
@@ -42,21 +40,18 @@ srcinfo:
 # initialise the AUR git repo for a package
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
-gitinit:
-    #!/bin/bash
-    set -euxo pipefail
-
-    if [[ -e .git ]]; then
-        echo "existing git repo found, exiting"
-        exit 1
+gitinit repo=file_stem(invocation_dir()):
+    @if [[ -e .git ]]; then \
+        echo "existing git repo found, exiting"; \
+        exit 1; \
     fi
     git init --initial-branch=master
-    echo "pkg" >> .gitignore
-    echo "src" >> .gitignore
-    echo '{{PKG_GLOB}}' >> .gitignore
-    if git ls-remote -h "https://aur.archlinux.org/$(basename "$PWD").git" >/dev/null ; then echo "$(tput bold)WARNING: an upstream AUR package already exists under this name$(tput sgr0)"; fi
+    printf "pkg\nsrc\n*.pkg.*" > .gitignore
+    @if git ls-remote -h "https://aur.archlinux.org/{{repo}}.git" >/dev/null ; then \
+         echo "$(tput bold)$(tput setaf 3)WARNING: an upstream AUR package already exists under this name$(tput sgr0)"; \
+    fi
     git remote add origin \
-        "ssh://aur@aur.archlinux.org/$(basename "$PWD").git"
+        "https://aur.archlinux.org/{{repo}}.git"
     git config push.autoSetupRemote true
 
 # create a new package
@@ -74,7 +69,7 @@ new name type="normal":
 clean: && cleangitignore
     @[ -f PKGBUILD ] || (echo "no PKGBUILD found, exiting for safety" && exit 1)
     rm -rfv pkg src
-    rm -fv {{PKG_GLOB}}
+    rm -fv *.pkg.*
 
 [private]
 [no-cd]
@@ -121,7 +116,7 @@ updates: makenvcconfig && removenvcconfig
 markupdated *names="": makenvcconfig && removenvcconfig
     nvtake -c "{{ NVCHECKER_CONFIG }}" {{ \
         if names == "" { \
-            replace_regex(file_stem(invocation_directory()), "-bin$", "") \
+            trim_end_match(file_stem(invocation_dir()), "-bin") \
         } else { \
             names \
         } \
@@ -131,7 +126,7 @@ markupdated *names="": makenvcconfig && removenvcconfig
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
 openurl:
-    {{BROWSER}} "$(just get_var url)"
+    {{env("BROWSER", "xdg-open")}} "$(just get_var url)"
 
 # run repro on a package
 [no-cd]
