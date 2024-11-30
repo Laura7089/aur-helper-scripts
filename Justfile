@@ -37,6 +37,14 @@ check *args="": (build "--force")
 srcinfo:
     makepkg --printsrcinfo > .SRCINFO
 
+# create a basic gitignore file
+[no-cd]
+[group('utilities (invoke next to PKGBUILD)')]
+[no-exit-message]
+gitignore:
+    @[ ! -f .gitignore ] || (echo 'existing gitignore found, exiting with failure' && exit 1)
+    printf "pkg\nsrc\n*.pkg.*\n*.tar.gz" > .gitignore
+
 # initialise the AUR git repo for a package
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
@@ -46,7 +54,7 @@ gitinit repo=file_stem(invocation_dir()):
         exit 1; \
     fi
     git init --initial-branch=master
-    printf "pkg\nsrc\n*.pkg.*" > .gitignore
+    just gitignore
     @if git ls-remote -h "https://aur.archlinux.org/{{repo}}.git" >/dev/null ; then \
          echo "$(tput bold)$(tput setaf 3)WARNING: an upstream AUR package already exists under this name$(tput sgr0)"; \
     fi
@@ -107,8 +115,8 @@ removenvcconfig:
 # check for new versions of configured packages
 [no-exit-message]
 [group('version management')]
-updates: makenvcconfig && removenvcconfig
-    -nvchecker -c "{{ NVCHECKER_CONFIG }}"
+updates *args="": makenvcconfig && removenvcconfig
+    -nvchecker -c "{{ NVCHECKER_CONFIG }}" {{ args }}
 
 # mark packages as having been updated
 [no-exit-message]
