@@ -12,6 +12,13 @@ REPRO_BUILD := invocation_directory() / "repro-build"
 build *args="--syncdeps":
     makepkg {{args}}
 
+# build the package in a clean chroot with aurutils
+[no-cd]
+[no-exit-message]
+[group('build & test (invoke next to PKGBUILD)')]
+build-chroot *args="--update":
+    aur chroot --build {{ args }}
+
 [no-cd]
 [private]
 latest:
