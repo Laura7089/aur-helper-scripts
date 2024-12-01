@@ -17,7 +17,7 @@ build *args="--syncdeps":
 [no-exit-message]
 [group('build & test (invoke next to PKGBUILD)')]
 build-chroot *args="--update":
-    aur chroot --build {{ args }}
+    aur chroot --temp --build {{ args }}
 
 [no-cd]
 [private]
@@ -50,7 +50,7 @@ srcinfo:
 [no-exit-message]
 gitignore:
     @[ ! -f .gitignore ] || (echo 'existing gitignore found, exiting with failure' && exit 1)
-    printf "pkg\nsrc\n*.pkg.*\n*.tar.gz" > .gitignore
+    printf "pkg\nsrc\n*.pkg.*\n*.tar.gz\n*.log" > .gitignore
 
 # initialise the AUR git repo for a package
 [no-cd]
