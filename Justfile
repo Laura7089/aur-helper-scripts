@@ -44,6 +44,17 @@ check *args="": (build "--force")
 srcinfo:
     makepkg --printsrcinfo > .SRCINFO
 
+# fetch sources and update checksums
+[no-cd]
+[group('utilities (invoke next to PKGBUILD)')]
+[no-exit-message]
+updpkgsums: clean
+    -makepkg --nobuild --force
+    @echo '{{BLUE+BOLD}}INFO{{NORMAL}}: downloaded clean sources, checksum errors are expected'
+    updpkgsums
+    @echo '{{BLUE+BOLD}}INFO{{NORMAL}}: re-downloading sources, checksum errors should not occur'
+    makepkg --nobuild --force
+
 # create a basic gitignore file
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
