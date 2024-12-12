@@ -48,12 +48,13 @@ srcinfo:
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
 [no-exit-message]
-updpkgsums: clean
+checksums: clean
     -makepkg --nobuild --force
     @echo '{{BLUE+BOLD}}INFO{{NORMAL}}: downloaded clean sources, checksum errors are expected'
     updpkgsums
     @echo '{{BLUE+BOLD}}INFO{{NORMAL}}: re-downloading sources, checksum errors should not occur'
     makepkg --nobuild --force
+alias sums := checksums
 
 # create a basic gitignore file
 [no-cd]
