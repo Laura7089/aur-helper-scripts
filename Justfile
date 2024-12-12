@@ -62,7 +62,7 @@ alias sums := checksums
 [no-exit-message]
 gitignore:
     @[ ! -f .gitignore ] || (echo 'existing gitignore found, exiting with failure' && exit 1)
-    printf "pkg\nsrc\n*.pkg.*\n*.tar.gz\n*.log" > .gitignore
+    printf "pkg\nsrc\n*.pkg.*\n*.tar.gz\n*.log\n*.part" > .gitignore
 
 # initialise the AUR git repo for a package
 [no-cd]
@@ -119,6 +119,12 @@ cleanall method="ok":
         -type d \
         -not -name legacy -not -name ".*" \
         "-{{ method }}" sh -c '(cd {} && just clean)' \;
+
+# bump a pkg version (naive)
+[group('utilities (invoke next to PKGBUILD)')]
+[no-cd]
+bump version: && checksums
+    sed -i 's/^pkgver=.*$/pkgver={{ version }}/' PKGBUILD
 
 [private]
 makenvcconfig:
