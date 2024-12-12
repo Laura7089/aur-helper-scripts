@@ -112,12 +112,12 @@ cleangitignore:
 
 # clean all packages in the entire root repo
 [no-exit-message]
-cleanall:
+cleanall method="ok":
     find \
         -maxdepth 1 -mindepth 1 \
         -type d \
         -not -name legacy -not -name ".*" \
-        -ok sh -c '(cd {} && just clean)' \;
+        "-{{ method }}" sh -c '(cd {} && just clean)' \;
 
 [private]
 makenvcconfig:
