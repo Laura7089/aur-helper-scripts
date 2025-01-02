@@ -55,7 +55,7 @@ fetch *args="": clean
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
 [no-exit-message]
-checksums: fetch "--skipinteg"
+checksums: (fetch "--skipinteg")
     updpkgsums
     @echo '{{BLUE+BOLD}}INFO{{NORMAL}}: re-downloading sources, checksum errors should not occur'
     just clean ""
