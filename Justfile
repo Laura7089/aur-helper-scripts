@@ -17,7 +17,7 @@ build *args="--syncdeps":
 [no-exit-message]
 [group('build & test (invoke next to PKGBUILD)')]
 build-chroot *args="--update":
-    aur chroot --temp --build {{ args }}
+    aur chroot --temp --build {{args}}
 
 [no-cd]
 [private]
@@ -48,14 +48,14 @@ srcinfo:
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
 [no-exit-message]
-fetch *args="":
-    makepkg --noprepare --nobuild --force {{ args }}
+fetch *args="": clean
+    makepkg --noprepare --nobuild --force {{args}}
 
-# fetch sources and update checksums
+# update checksums
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
 [no-exit-message]
-checksums: clean (fetch "--skipinteg")
+checksums: fetch "--skipinteg"
     updpkgsums
     @echo '{{BLUE+BOLD}}INFO{{NORMAL}}: re-downloading sources, checksum errors should not occur'
     just clean ""
@@ -101,8 +101,8 @@ new name type="normal":
 [group('utilities (invoke next to PKGBUILD)')]
 clean *rmargs="-v": && cleangitignore
     @[ -f PKGBUILD ] || (echo "no PKGBUILD found, exiting for safety" && exit 1)
-    rm -rf {{ rmargs }} pkg src
-    rm -f {{ rmargs }} *.pkg.*
+    rm -rf {{rmargs}} pkg src
+    rm -f {{rmargs}} *.pkg.*
 
 [private]
 [no-cd]
@@ -124,41 +124,41 @@ cleanall method="ok":
         -maxdepth 1 -mindepth 1 \
         -type d \
         -not -name legacy -not -name ".*" \
-        "-{{ method }}" sh -c '(cd {} && just clean)' \;
+        "-{{method}}" sh -c '(cd {} && just clean)' \;
 
 # bump a pkg version (naive)
 [group('utilities (invoke next to PKGBUILD)')]
 [no-cd]
 bump version: && checksums srcinfo check markupdated
-    @if grep '^pkgver={{ version }}' PKGBUILD; then \
+    @if grep '^pkgver={{version}}' PKGBUILD; then \
         echo '{{BOLD + RED}}error{{NORMAL}}: PKGBUILD already contains this version'; \
         exit 1; \
     fi
-    sed -i 's/^pkgver=.*$/pkgver={{ version }}/' PKGBUILD
+    sed -i 's/^pkgver=.*$/pkgver={{version}}/' PKGBUILD
     sed -i 's/^pkgrel=.*$/pkgrel=1/' PKGBUILD
 
 [private]
 makenvcconfig:
     [ -f .nvchecker_keys.toml ] || echo '[keys]' > .nvchecker_keys.toml
-    cp nvchecker_config.toml "{{ NVCHECKER_CONFIG }}"
-    find -name nvchecker.toml -exec cat {} + >> "{{ NVCHECKER_CONFIG }}"
+    cp nvchecker_config.toml "{{NVCHECKER_CONFIG}}"
+    find -name nvchecker.toml -exec cat {} + >> "{{NVCHECKER_CONFIG}}"
 
 [no-exit-message]
 [private]
 removenvcconfig:
-    rm "{{ NVCHECKER_CONFIG }}"
+    rm "{{NVCHECKER_CONFIG}}"
 
 # check for new versions of configured packages
 [no-exit-message]
 [group('version management')]
 updates *args="": makenvcconfig && removenvcconfig
-    -nvchecker -c "{{ NVCHECKER_CONFIG }}" {{ args }}
+    -nvchecker -c "{{NVCHECKER_CONFIG}}" {{args}}
 
 # mark packages as having been updated
 [no-exit-message]
 [group('version management')]
 markupdated *names="": makenvcconfig && removenvcconfig
-    nvtake -c "{{ NVCHECKER_CONFIG }}" {{ \
+    nvtake -c "{{NVCHECKER_CONFIG}}" {{ \
         if names == "" { \
             trim_end_match(file_stem(invocation_dir()), "-bin") \
         } else { \
@@ -177,10 +177,10 @@ openurl:
 [no-exit-message]
 [group('build & test (invoke next to PKGBUILD)')]
 repro dir="./repro-build" *args="-d": (build "--force")
-    CACHEDIR="{{ REPRO_CACHE }}" \
+    CACHEDIR="{{REPRO_CACHE}}" \
         repro \
-        -o "{{ REPRO_BUILD }}" \
-        {{ args }} \
+        -o "{{REPRO_BUILD}}" \
+        {{args}} \
          "$(just latest)"
 
 # print the pkgver of a package
