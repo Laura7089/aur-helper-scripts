@@ -129,7 +129,11 @@ cleanall method="ok":
 # bump a pkg version (naive)
 [group('utilities (invoke next to PKGBUILD)')]
 [no-cd]
-bump version: && checksums
+bump version: && checksums srcinfo check markupdated
+    @if grep '^pkgver={{ version }}' PKGBUILD; then \
+        echo '{{BOLD + RED}}error{{NORMAL}}: PKGBUILD already contains this version'; \
+        exit 1; \
+    fi
     sed -i 's/^pkgver=.*$/pkgver={{ version }}/' PKGBUILD
     sed -i 's/^pkgrel=.*$/pkgrel=1/' PKGBUILD
 
