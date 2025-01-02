@@ -44,16 +44,22 @@ check *args="": (build "--force")
 srcinfo:
     makepkg --printsrcinfo > .SRCINFO
 
+# fetch sources
+[no-cd]
+[group('utilities (invoke next to PKGBUILD)')]
+[no-exit-message]
+fetch *args="":
+    makepkg --noprepare --nobuild --force {{ args }}
+
 # fetch sources and update checksums
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
 [no-exit-message]
-checksums: clean
-    -makepkg --nobuild --force
-    @echo '{{BLUE+BOLD}}INFO{{NORMAL}}: downloaded clean sources, checksum errors are expected'
+checksums: clean (fetch "--skipinteg")
     updpkgsums
     @echo '{{BLUE+BOLD}}INFO{{NORMAL}}: re-downloading sources, checksum errors should not occur'
-    makepkg --nobuild --force
+    just clean ""
+    makepkg --verifysource
 alias sums := checksums
 
 # create a basic gitignore file
@@ -93,10 +99,10 @@ new name type="normal":
 # clean a package directory
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
-clean: && cleangitignore
+clean *rmargs="-v": && cleangitignore
     @[ -f PKGBUILD ] || (echo "no PKGBUILD found, exiting for safety" && exit 1)
-    rm -rfv pkg src
-    rm -fv *.pkg.*
+    rm -rf {{ rmargs }} pkg src
+    rm -f {{ rmargs }} *.pkg.*
 
 [private]
 [no-cd]
@@ -125,6 +131,7 @@ cleanall method="ok":
 [no-cd]
 bump version: && checksums
     sed -i 's/^pkgver=.*$/pkgver={{ version }}/' PKGBUILD
+    sed -i 's/^pkgrel=.*$/pkgrel=1/' PKGBUILD
 
 [private]
 makenvcconfig:
