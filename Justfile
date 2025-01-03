@@ -2,6 +2,9 @@
 
 NVCHECKER_CONFIG := `mktemp -u -p. .nvcheckerXXXXXXX.temp.toml`
 
+PKG_NAME := file_stem(invocation_dir())
+PKG_NAME_NOBIN := trim_end_match(PKG_NAME, "-bin")
+
 REPRO_CACHE := justfile_directory() / ".repro-cache"
 REPRO_BUILD := invocation_directory() / "repro-build"
 
@@ -73,7 +76,7 @@ gitignore:
 # initialise the AUR git repo for a package
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
-gitinit repo=file_stem(invocation_dir()):
+gitinit repo=PKG_NAME:
     @if [[ -e .git ]]; then \
         echo "existing git repo found, exiting"; \
         exit 1; \
@@ -157,14 +160,8 @@ updates *args="": makenvcconfig && removenvcconfig
 # mark packages as having been updated
 [no-exit-message]
 [group('version management')]
-markupdated *names="": makenvcconfig && removenvcconfig
-    nvtake -c "{{NVCHECKER_CONFIG}}" {{ \
-        if names == "" { \
-            trim_end_match(file_stem(invocation_dir()), "-bin") \
-        } else { \
-            names \
-        } \
-    }}
+markupdated *names=PKG_NAME_NOBIN: makenvcconfig && removenvcconfig
+    nvtake -c "{{NVCHECKER_CONFIG}}" {{names}}
 
 # open the upstream in a browser
 [no-cd]
