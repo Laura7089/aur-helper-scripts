@@ -51,6 +51,7 @@ install *args="": (build "-si" args)
 check *args="": (build "--force")
     namcap {{args}} PKGBUILD
     namcap {{args}} "$(just latest)"
+    find-libprovides "$(just latest)"
 
 # generate the .SRCINFO file
 [no-cd]
