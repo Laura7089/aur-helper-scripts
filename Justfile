@@ -8,6 +8,8 @@ PKG_NAME_NOBIN := trim_end_match(PKG_NAME, "-bin")
 REPRO_CACHE := justfile_directory() / ".repro-cache"
 REPRO_BUILD := invocation_directory() / "repro-build"
 
+RM_ARGS := "--force --verbose"
+
 [private]
 log colour tag +text:
     @echo "{{colour+BOLD+tag+NORMAL+BOLD}}: {{text}}{{NORMAL}}"
@@ -43,7 +45,7 @@ latest:
 [no-cd]
 [no-exit-message]
 [group('build & test (invoke next to PKGBUILD)')]
-install *args="": (build "-si" args)
+install *args="": (build "--syncdeps --install" args)
 
 # check the package with namcap
 [no-cd]
@@ -107,10 +109,10 @@ new name type="normal": && (info "don't forget to add nvchecker configuration fo
 # clean a package directory
 [no-cd]
 [group('utilities (invoke next to PKGBUILD)')]
-clean *rmargs="-v": && cleangitignore
+clean: && cleangitignore
     @[ -f PKGBUILD ] || just err 'no PKGBUILD found, exiting for safety'
-    rm -rf {{rmargs}} pkg src
-    rm -f {{rmargs}} *.pkg.*
+    rm --recursive {{RM_ARGS}} pkg src
+    rm {{RM_ARGS}} *.pkg.*
 
 [private]
 [no-cd]
@@ -121,7 +123,7 @@ cleangitignore:
     if [[ -e .gitignore ]]; then
         globs="$(grep '^[^!#]' .gitignore | grep -v .gitignore)"
         for glob in $globs; do
-            sh -c "rm -rfv $glob"
+            sh -c "rm --recursive {{RM_ARGS}} $glob"
         done
     fi
 
@@ -133,7 +135,7 @@ cleanall method="ok":
         -type d \
         -not -name legacy -not -name ".*" \
         "-{{method}}" sh -c '(cd {} && just clean)' \;
-    rm -fv .*.temp.toml
+    rm {{RM_ARGS}} .*.temp.toml
 
 # bump a pkg version (naive)
 [group('utilities (invoke next to PKGBUILD)')]
@@ -154,19 +156,19 @@ makenvcconfig:
 [no-exit-message]
 [private]
 removenvcconfig:
-    rm "{{NVCHECKER_CONFIG}}"
+    rm {{RM_ARGS}} "{{NVCHECKER_CONFIG}}"
 
 # check for new versions of configured packages
 [no-exit-message]
 [group('version management')]
 updates *args="": makenvcconfig && removenvcconfig
-    -nvchecker -c "{{NVCHECKER_CONFIG}}" {{args}}
+    -nvchecker --file "{{NVCHECKER_CONFIG}}" {{args}}
 
 # mark packages as having been updated
 [no-exit-message]
 [group('version management')]
 markupdated *names=PKG_NAME_NOBIN: makenvcconfig && removenvcconfig
-    nvtake -c "{{NVCHECKER_CONFIG}}" {{names}}
+    nvtake --file "{{NVCHECKER_CONFIG}}" {{names}}
 
 # open the upstream in a browser
 [no-cd]
