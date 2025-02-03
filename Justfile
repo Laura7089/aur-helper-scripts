@@ -133,6 +133,7 @@ cleanall method="ok":
         -type d \
         -not -name legacy -not -name ".*" \
         "-{{method}}" sh -c '(cd {} && just clean)' \;
+    rm -fv .*.temp.toml
 
 # bump a pkg version (naive)
 [group('utilities (invoke next to PKGBUILD)')]
