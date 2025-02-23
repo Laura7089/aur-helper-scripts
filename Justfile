@@ -76,7 +76,7 @@ fetch *args="": clean
 checksums: (fetch "--skipinteg")
     updpkgsums
     @just info 're-downloading sources, checksum errors should not occur'
-    just clean ""
+    just clean
     makepkg --verifysource
 alias sums := checksums
 
