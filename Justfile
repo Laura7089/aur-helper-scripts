@@ -95,7 +95,7 @@ gitinit repo=PKG_NAME: && gitignore
     @[[ ! -e .git ]] || just err 'existing git repo found'
     git init --initial-branch=master
     git remote add origin \
-        "https://aur.archlinux.org/{{repo}}.git"
+        "ssh://aur@aur.archlinux.org/{{repo}}.git"
     git config push.autoSetupRemote true
 
 # create a new package
